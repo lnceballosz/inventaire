@@ -2,7 +2,7 @@ const __ = require('config').universalPath
 const _ = __.require('builders', 'utils')
 const error_ = __.require('lib', 'error/error')
 const validateObject = __.require('lib', 'validate_object')
-const { rolesByAccess } = require('./get_user_access_levels')
+const { rolesByAccess } = require('./user_access_levels')
 
 module.exports = controllers => {
   const actions = getActions(controllers)
