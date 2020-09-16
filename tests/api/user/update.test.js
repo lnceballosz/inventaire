@@ -56,4 +56,14 @@ describe('user:update', () => {
       _.map(foundUsersAfterDeletedPosition, '_id').should.not.containEql(user._id)
     })
   })
+
+  describe('settings', () => {
+    it('should allow to update a setting', async () => {
+      const user = await getReservedUser()
+      const attribute = 'settings.notifications.global'
+      await customAuthReq(user, 'put', endpoint, { attribute, value: false })
+      const updatedUser = await getRefreshedUser(user)
+      _.get(updatedUser, attribute).should.be.false()
+    })
+  })
 })
