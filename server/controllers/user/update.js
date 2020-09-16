@@ -9,18 +9,31 @@ const error_ = __.require('lib', 'error/error')
 const responses_ = __.require('lib', 'responses')
 const { basicUpdater } = __.require('lib', 'doc_updates')
 const { Track } = __.require('lib', 'track')
+const sanitize = __.require('lib', 'sanitize/sanitize')
+
+const sanitization = {
+  attribute: {},
+  value: {
+    canBeNull: true
+  }
+}
 
 module.exports = (req, res) => {
-  const { user, body } = req
-  const { attribute } = body
-  let { value } = body
+  sanitize(req, res, sanitization)
+  .then(updateUser(req.user))
+  .then(responses_.Ok(res))
+  .then(Track(req, [ 'user', 'update' ]))
+  .catch(error_.Handler(req, res))
+}
 
-  if (!_.isNonEmptyString(attribute)) {
-    return error_.bundleMissingBody(req, res, 'attribute')
-  }
+// This function update the document and should thus
+// rather be in the User model, but async checks make it a bit hard
+const updateUser = user => async params => {
+  const { attribute } = params
+  let { value } = params
 
   if (value == null && !acceptNullValue.includes(attribute)) {
-    return error_.bundleMissingBody(req, res, 'value')
+    throw error_.newMissingBody('value')
   }
 
   // doesnt change anything for normal attribute
@@ -31,12 +44,12 @@ module.exports = (req, res) => {
   const currentValue = _.get(user, attribute)
 
   if (value === currentValue) {
-    return error_.bundle(req, res, 'already up-to-date', 400, { attribute, value })
+    throw error_.new('already up-to-date', 400, { attribute, value })
   }
 
   if (attribute !== rootAttribute) {
     if (!validations.deepAttributesExistance(attribute)) {
-      return error_.bundleInvalid(req, res, 'attribute', attribute)
+      throw error_.newInvalid('attribute', attribute)
     }
   }
 
@@ -44,25 +57,19 @@ module.exports = (req, res) => {
 
   if (updatable.includes(rootAttribute)) {
     if (!_.get(validations, rootAttribute)(value)) {
-      return error_.bundleInvalid(req, res, 'value', value)
+      throw error_.newInvalid('value', value)
     }
 
     return updateAttribute(user, attribute, value)
-    .then(responses_.Ok(res))
-    .then(Track(req, [ 'user', 'update' ]))
-    .catch(error_.Handler(req, res))
   }
 
   if (concurrencial.includes(attribute)) {
-    // checks for validity and availability (+ reserve words for username)
-    return availability_[attribute](value, currentValue)
-    .then(() => updateAttribute(user, attribute, value))
-    .then(responses_.Ok(res))
-    .then(Track(req, [ 'user', 'update' ]))
-    .catch(error_.Handler(req, res))
+    // Checks for validity and availability (+ reserve words for username)
+    await availability_[attribute](value, currentValue)
+    return updateAttribute(user, attribute, value)
   }
 
-  error_.bundle(req, res, `forbidden update: ${attribute} - ${value}`, 403)
+  throw error_.new('forbidden update', 403, { attribute, value })
 }
 
 const updateAttribute = (user, attribute, value) => {
