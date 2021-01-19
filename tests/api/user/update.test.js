@@ -4,6 +4,9 @@ const should = require('should')
 const { authReq, getUser, getUserB, customAuthReq, getReservedUser } = require('../utils/utils')
 const { getUsersNearPosition } = require('../utils/users')
 const { getRefreshedUser } = require('../fixtures/users')
+const { getToken } = require('../utils/oauth')
+const { bearerTokenReq } = require('../utils/request')
+const { shouldNotBeCalled } = require('../../unit/utils')
 const endpoint = '/api/user'
 const randomString = __.require('lib', 'utils/random_string')
 
@@ -54,6 +57,43 @@ describe('user:update', () => {
       await authReq('put', endpoint, { attribute, value: null })
       const foundUsersAfterDeletedPosition = await getUsersNearPosition(value, userB)
       _.map(foundUsersAfterDeletedPosition, '_id').should.not.containEql(user._id)
+    })
+  })
+
+  describe('username', () => {
+    it('should reject an update to an existing username', async () => {
+      const [ userA, userB ] = await Promise.all([ getUser(), getUserB() ])
+      await customAuthReq(userA, 'put', endpoint, {
+        attribute: 'username',
+        value: userB.username
+      })
+      .then(shouldNotBeCalled)
+      .catch(err => {
+        err.statusCode.should.equal(400)
+        err.body.status_verbose.should.equal('this username is already used')
+      })
+    })
+
+    it('should reject an update to an existing stableUsername', async () => {
+      const userA = await getUser()
+      const userB = await getReservedUser()
+      const initialUsername = userB.username
+      const token = await getToken({ user: userB, scope: [ 'stable-username' ] })
+      // Trigger the creation of a stableUsername
+      await bearerTokenReq(token, 'get', '/api/user')
+      await customAuthReq(userB, 'put', endpoint, {
+        attribute: 'username',
+        value: initialUsername + 'a'
+      })
+      await customAuthReq(userA, 'put', endpoint, {
+        attribute: 'username',
+        value: initialUsername
+      })
+      .then(shouldNotBeCalled)
+      .catch(err => {
+        err.statusCode.should.equal(400)
+        err.body.status_verbose.should.equal('this username is already used')
+      })
     })
   })
 })
