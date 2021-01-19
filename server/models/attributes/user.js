@@ -6,6 +6,7 @@ attributes.ownerSafe = [
   '_rev',
   'type',
   'username',
+  'stableUsername',
   'created',
   'email',
   'picture',
@@ -59,7 +60,8 @@ attributes.updatable = [
 attributes.critical = [
   '_id',
   '_rev',
-  'username'
+  'username',
+  'stableUsername',
 ]
 
 // Attributes to keep in documents where a stakeholder might loose
