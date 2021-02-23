@@ -15,13 +15,28 @@ module.exports = async reqUsername => {
   const actor = {
     '@context': [
       'https://www.w3.org/ns/activitystreams',
+      'https://w3id.org/security/v1'
     ],
     type: 'Person',
     id: actorUrl,
     name: username,
   }
+  await addKeyPair(actor, user, actorUrl)
   addIcon(actor, picture)
   return actor
+}
+
+const addKeyPair = async (actor, user, actorUrl) => {
+  let { publicKey } = user
+  if (!publicKey) {
+    publicKey = await user_.createKeyPair(user).publicKey
+  }
+  actor.publicKey = {
+    // "#" is an identifier in order to host the key in a same document as the actor URL document
+    id: `${actorUrl}#main-key`,
+    owner: actorUrl, // must be actor.id
+    publicKeyPem: publicKey
+  }
 }
 
 const addIcon = (actor, picture) => {

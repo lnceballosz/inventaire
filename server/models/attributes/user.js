@@ -19,6 +19,7 @@ attributes.ownerSafe = [
   'summaryPeriodicity',
   'readToken',
   'roles',
+  'publicKey',
   'snapshot'
 ]
 
@@ -31,6 +32,7 @@ attributes.public = [
   'special',
   'created',
   'roles',
+  'publicKey',
   // Non-authorized data should still be deleted
   // snapshot.private
   // snapshot.network (unless requested by someone of the user network)
