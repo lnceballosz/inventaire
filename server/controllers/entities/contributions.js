@@ -4,6 +4,9 @@ const error_ = __.require('lib', 'error/error')
 const sanitize = __.require('lib', 'sanitize/sanitize')
 const responses_ = __.require('lib', 'responses')
 const patches_ = require('./lib/patches')
+const user_ = __.require('controllers', 'user/lib/user')
+const { shouldBeAnonymized } = __.require('models', 'user')
+const anonymizePatches = require('./lib/anonymize_patches')
 
 const sanitization = {
   user: { optional: true },
@@ -13,14 +16,27 @@ const sanitization = {
 
 module.exports = (req, res) => {
   sanitize(req, res, sanitization)
-  .then(params => {
-    const { user: userId, limit, offset } = params
-    if (userId != null) {
-      return patches_.byUserId(userId, limit, offset)
-    } else {
-      return patches_.byDate(limit, offset)
-    }
-  })
+  .then(getContributions)
   .then(responses_.Send(res))
   .catch(error_.Handler(req, res))
+}
+
+const getContributions = async ({ userId, limit, offset, reqUserHasAdminAccess }) => {
+  if (userId && !reqUserHasAdminAccess) {
+    const user = await user_.byId(userId)
+    if (shouldBeAnonymized(user)) {
+      throw error_.new('non-public contributions', 403)
+    }
+  }
+
+  let patchesPage
+  if (userId != null) {
+    patchesPage = await patches_.byUserId(userId, limit, offset)
+  } else {
+    patchesPage = await patches_.byDate(limit, offset)
+  }
+
+  if (!reqUserHasAdminAccess) await anonymizePatches(patchesPage.patches)
+
+  return patchesPage
 }

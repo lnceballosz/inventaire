@@ -5,6 +5,7 @@ const assert_ = __.require('utils', 'assert_types')
 const responses_ = __.require('lib', 'responses')
 const parameters = require('./parameters')
 const { generics } = parameters
+const { getUserAccessLevels } = __.require('lib', 'user_access_levels')
 
 module.exports = async (req, res, configs) => {
   assert_.object(req.query)
@@ -27,7 +28,12 @@ module.exports = async (req, res, configs) => {
     sanitizeParameter(input, name, config, place, res)
   }
 
-  if (req.user) input.reqUserId = req.user._id
+  if (req.user) {
+    input.reqUserId = req.user._id
+    const reqUserAccessLevel = getUserAccessLevels(req.user)
+    input.reqUserHasAdminAccess = reqUserAccessLevel.includes('admin')
+    input.reqUserHasDataadminAccess = reqUserAccessLevel.includes('dataadmin')
+  }
 
   return input
 }
