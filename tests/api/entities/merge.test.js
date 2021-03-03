@@ -1,18 +1,18 @@
 const CONFIG = require('config')
 const __ = CONFIG.universalPath
 require('should')
-const { authReq, dataadminReq, shouldNotBeCalled } = require('../utils/utils')
+const { publicReq, dataadminReq, shouldNotBeCalled, getUser } = require('../utils/utils')
 const randomString = __.require('lib', './utils/random_string')
 const { getByUris, merge, getHistory, addClaim } = require('../utils/entities')
 const { getByIds: getItemsByIds } = require('../utils/items')
 const { createWork, createHuman, createEdition, createEditionWithIsbn, createItemFromEntityUri, createWorkWithAuthor, someFakeUri } = require('../fixtures/entities')
 
 describe('entities:merge', () => {
-  it('should require dataadmin rights', async () => {
-    await authReq('put', '/api/entities?action=merge')
+  it('should require to be authentified', async () => {
+    await publicReq('put', '/api/entities?action=merge')
     .then(shouldNotBeCalled)
     .catch(err => {
-      err.statusCode.should.equal(403)
+      err.statusCode.should.equal(401)
     })
   })
 
@@ -221,5 +221,19 @@ describe('entities:merge', () => {
     const { entities } = await getByUris(humanAUri)
     const entity = entities[humanAUri]
     entity._meta_type.should.equal('removed:placeholder')
+  })
+
+  describe('non-dataadmin', () => {
+    it('should create a merge request task', async () => {
+      const [ editionA, editionB ] = await Promise.all([
+        createEdition(),
+        createEdition()
+      ])
+      const { task, merged } = await merge(editionA.uri, editionB.uri, { user: getUser() })
+      task.should.be.an.Object()
+      task.suspectUri.should.equal(editionA.uri)
+      task.suggestionUri.should.equal(editionB.uri)
+      merged.should.be.false()
+    })
   })
 })
