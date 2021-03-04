@@ -1,22 +1,20 @@
 const CONFIG = require('config')
 const __ = CONFIG.universalPath
 const _ = __.require('builders', 'utils')
-const { pass, entityUri, userId, BoundedString } = require('./common')
+const { pass, entityUri, BoundedString } = require('./common')
 
-const attributes = require('../attributes/task')
+const { allowedValues, updatable } = require('../attributes/task')
 
 module.exports = {
   pass,
-  // in attributes/task.js, attributes keys should match
-  // db keys to verify if attribute is updatable
-  attribute: attribute => Object.keys(attributes).includes(attribute),
-  type: taskType => attributes.type.includes(taskType),
-  entitiesType: entitiesType => attributes.entitiesType.includes(entitiesType),
-  state: taskState => attributes.state.includes(taskState),
+  attribute: attribute => updatable.includes(attribute),
+  type: taskType => allowedValues.type.includes(taskType),
+  entitiesType: entitiesType => allowedValues.entitiesType.includes(entitiesType),
+  state: taskState => allowedValues.state.includes(taskState),
   suspectUri: entityUri,
   lexicalScore: _.isNumber,
   relationScore: _.isNumber,
   externalSourcesOccurrences: _.isArray,
-  reporter: userId,
+  reporters: reporters => _.isNonEmptyArray(reporters) && reporters.every(_.isUserId),
   clue: BoundedString(0, 500)
 }

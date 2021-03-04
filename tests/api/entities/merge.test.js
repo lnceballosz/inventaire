@@ -1,7 +1,7 @@
 const CONFIG = require('config')
 const __ = CONFIG.universalPath
 require('should')
-const { publicReq, dataadminReq, shouldNotBeCalled, getUser } = require('../utils/utils')
+const { publicReq, dataadminReq, shouldNotBeCalled, getUser, getUserB } = require('../utils/utils')
 const randomString = __.require('lib', './utils/random_string')
 const { getByUris, merge, getHistory, addClaim } = require('../utils/entities')
 const { getByIds: getItemsByIds } = require('../utils/items')
@@ -234,6 +234,30 @@ describe('entities:merge', () => {
       task.suspectUri.should.equal(editionA.uri)
       task.suggestionUri.should.equal(editionB.uri)
       merged.should.be.false()
+    })
+
+    it('should reuse an existing task when the same user is requesting the same merge', async () => {
+      const [ editionA, editionB ] = await Promise.all([
+        createEdition(),
+        createEdition()
+      ])
+      const user = await getUser()
+      const { task: taskA } = await merge(editionA.uri, editionB.uri, { user })
+      const { task: taskB } = await merge(editionA.uri, editionB.uri, { user })
+      taskA._id.should.equal(taskB._id)
+      taskB.reporters.should.deepEqual([ user._id ])
+    })
+
+    it('should reuse an existing task when another user is requesting the same merge', async () => {
+      const [ editionA, editionB ] = await Promise.all([
+        createEdition(),
+        createEdition()
+      ])
+      const [ userA, userB ] = await Promise.all([ getUser(), getUserB() ])
+      const { task: taskA } = await merge(editionA.uri, editionB.uri, { user: userA })
+      const { task: taskB } = await merge(editionA.uri, editionB.uri, { user: userB })
+      taskA._id.should.equal(taskB._id)
+      taskB.reporters.should.deepEqual([ userA._id, userB._id ])
     })
   })
 })
