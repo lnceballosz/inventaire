@@ -4,6 +4,7 @@ const { wait } = require('lib/promises')
 const host = CONFIG.fullPublicHost()
 const requests_ = require('lib/requests')
 const assert_ = require('lib/utils/assert_types')
+const { sign } = require('controllers/activitypub/lib/security')
 
 const testServerAvailability = async () => {
   if (!CONFIG.waitForServer) return
@@ -74,4 +75,17 @@ const rawCustomAuthReq = async (user, method, endpoint, body) => {
   })
 }
 
-module.exports = { request, rawRequest, customAuthReq, rawCustomAuthReq }
+const signedReq = async (method, endpoint, url, keyUrl, privateKey) => {
+  const date = (new Date()).toUTCString()
+  const publicHost = CONFIG.host
+  const signature = await sign({ method, keyUrl, privateKey, endpoint, hostname: publicHost, date })
+  return rawRequest(method, url, {
+    headers: {
+      Host: publicHost,
+      Date: date,
+      Signature: signature,
+    }
+  })
+}
+
+module.exports = { request, rawRequest, customAuthReq, rawCustomAuthReq, signedReq }
