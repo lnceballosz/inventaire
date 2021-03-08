@@ -19,7 +19,7 @@ module.exports = async reqUsername => {
     ],
     type: 'Person',
     id: actorUrl,
-    name: username,
+    name: username
   }
   await addKeyPair(actor, user, actorUrl)
   addIcon(actor, picture)
