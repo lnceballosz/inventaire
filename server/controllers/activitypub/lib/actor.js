@@ -28,8 +28,8 @@ module.exports = async reqUsername => {
 
 const addKeyPair = async (actor, user, actorUrl) => {
   let { publicKey } = user
-  if (!publicKey) {
-    publicKey = await user_.createKeyPair(user).publicKey
+  if (publicKey === undefined) {
+    publicKey = await user_.createKeyPair(user)
   }
   actor.publicKey = {
     // "#" is an identifier in order to host the key in a same document as the actor URL document
