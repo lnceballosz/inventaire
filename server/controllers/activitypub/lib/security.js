@@ -1,6 +1,5 @@
-const __ = require('config').universalPath
-const error_ = __.require('lib', 'error/error')
-const requests_ = __.require('lib', 'requests')
+const error_ = require('lib/error/error')
+const requests_ = require('lib/requests')
 const crypto = require('crypto')
 
 const API = module.exports = {

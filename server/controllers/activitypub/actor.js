@@ -1,9 +1,8 @@
-const __ = require('config').universalPath
-const error_ = __.require('lib', 'error/error')
-const actor = __.require('controllers', 'activitypub/lib/actor')
-const sanitize = __.require('lib', 'sanitize/sanitize')
-const { verifySignature } = __.require('controllers', 'activitypub/lib/security')
-const { tap } = __.require('lib', 'promises')
+const error_ = require('lib/error/error')
+const actor = require('controllers/activitypub/lib/actor')
+const sanitize = require('lib/sanitize/sanitize')
+const { verifySignature } = require('controllers/activitypub/lib/security')
+const { tap } = require('lib/promises')
 
 const sanitization = {
   name: {}

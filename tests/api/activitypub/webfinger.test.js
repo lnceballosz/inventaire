@@ -1,8 +1,7 @@
 const CONFIG = require('config')
-const __ = CONFIG.universalPath
 require('should')
 const { publicReq } = require('../utils/utils')
-const { shouldNotBeCalled, rethrowShouldNotBeCalledErrors } = __.require('apiTests', 'utils/utils')
+const { shouldNotBeCalled, rethrowShouldNotBeCalledErrors } = require('apiTests/utils/utils')
 const { createUser, createUsername } = require('../fixtures/users')
 
 const endpoint = '/.well-known/webfinger?resource='
