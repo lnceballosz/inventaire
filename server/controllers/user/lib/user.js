@@ -10,7 +10,7 @@ const { getNetworkIds } = require('controllers/user/lib/relations_status')
 const { defaultAvatar } = require('lib/assets')
 const searchUsersByPosition = require('lib/search_by_position')(db, 'users')
 const searchUsersByDistance = require('lib/search_by_distance')('users')
-const { generateKeyPair } = __.require('lib', 'crypto').keyPair
+const { generateKeyPair } = require('lib/crypto').keyPair
 
 const user_ = module.exports = {
   byId: db.get,
